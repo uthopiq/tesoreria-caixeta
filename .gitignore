@@ -1,0 +1,20 @@
+# Frontend
+node_modules/
+dist/
+.env.development
+.env.production
+
+# Backend Python (Bridge API)
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+
+# Factusol Data (NO subir la base de datos real por seguridad y peso)
+bridge-api/data/*.accdb
+bridge-api/temp_factusol.accdb
+
+# Docker & OS
+.DS_Store
+Thumbs.db

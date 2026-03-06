@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  # Base de Datos PostgreSQL (La "Verdad Absoluta")
+  postgres:
+    image: postgres:15
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: app_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  # --- NUEVO: Herramienta Visual ---
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin_panel
+    environment:
+      PGADMIN_DEFAULT_EMAIL: contacto@uthopiq.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
+  # n8n (El Cerebro)
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n_app
+    ports:
+      - "5678:5678"
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=app_db
+      - DB_POSTGRESDB_USER=admin
+      - DB_POSTGRESDB_PASSWORD=password123
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
