@@ -7,13 +7,29 @@ function Login() {
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
-        // TODO: Conectar con autenticación real. Por ahora, 'demo' y 'demo' funciona.
-        if (email === 'demo' && password === 'demo') {
-            navigate('/dashboard/bancos');
-        } else {
-            alert('Credenciales incorrectas (Usa demo/demo)');
+        setError("");
+
+        try {
+            // Llamamos a tu nuevo Backend de Node.js en Hostinger
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+            // Si la BBDD dice que OK, guardamos la sesión y entramos
+            localStorage.setItem("user", JSON.stringify(data.user));
+            navigate("/dashboard");
+            } else {
+            setError(data.error || "Credenciales incorrectas");
+            }
+        } catch (err) {
+            setError("Error de conexión con el servidor");
         }
     };
 
