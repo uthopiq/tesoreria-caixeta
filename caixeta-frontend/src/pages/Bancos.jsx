@@ -129,7 +129,7 @@ export default function Bancos() {
         if (filter === 'year') newDate = subYears(selectedDate, 1);
         else if (filter === 'month') newDate = subMonths(selectedDate, 1);
         else newDate = subWeeks(selectedDate, 1);
-        
+
         // Ensure we don't go completely before our minDate's period
         setSelectedDate(newDate);
     };
@@ -139,7 +139,7 @@ export default function Bancos() {
         if (filter === 'year') newDate = addYears(selectedDate, 1);
         else if (filter === 'month') newDate = addMonths(selectedDate, 1);
         else newDate = addWeeks(selectedDate, 1);
-        
+
         setSelectedDate(newDate);
     };
 
@@ -176,11 +176,11 @@ export default function Bancos() {
             const rangeStart = startOfDay(customRange.start);
             const rangeEnd = startOfDay(customRange.end);
             if (rangeStart > rangeEnd) return [];
-            
+
             interval = { start: rangeStart, end: rangeEnd };
             const days = eachDayOfInterval(interval);
             const today = new Date();
-            
+
             return days.map(dayDate => {
                 if (startOfDay(dayDate) > startOfDay(today)) {
                     return {
@@ -316,7 +316,7 @@ export default function Bancos() {
 
         // Find closest date strings up to periodEnd
         const periodEndStr = format(periodEnd, 'yyyy-MM-dd');
-        
+
         // Find the latest record that is <= periodEndStr
         const validDates = sortedDates.filter(d => d <= periodEndStr);
         const latestValidDate = validDates[0] || sortedDates[0];
@@ -350,8 +350,8 @@ export default function Bancos() {
                             <div className="flex flex-col gap-1.5 px-2 md:px-3 py-1.5 text-xs md:text-sm">
                                 <div className="flex items-center gap-2">
                                     <span className="text-slate-500 dark:text-slate-400 font-medium w-12">Desde:</span>
-                                    <input 
-                                        type="date" 
+                                    <input
+                                        type="date"
                                         value={format(customRange.start, 'yyyy-MM-dd')}
                                         max={format(new Date(), 'yyyy-MM-dd')}
                                         onChange={(e) => {
@@ -364,8 +364,8 @@ export default function Bancos() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <span className="text-slate-500 dark:text-slate-400 font-medium w-12">Hasta:</span>
-                                    <input 
-                                        type="date" 
+                                    <input
+                                        type="date"
                                         value={format(customRange.end, 'yyyy-MM-dd')}
                                         max={format(new Date(), 'yyyy-MM-dd')}
                                         onChange={(e) => {
@@ -379,23 +379,23 @@ export default function Bancos() {
                             </div>
                         ) : (
                             <>
-                                <button 
-                                    onClick={handlePrev} 
+                                <button
+                                    onClick={handlePrev}
                                     disabled={disablePrev}
                                     className={`p-1.5 rounded-lg flex items-center justify-center transition-colors ${disablePrev ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'}`}
                                 >
                                     <MdChevronLeft className="text-xl" />
                                 </button>
-                                
-                                <button 
+
+                                <button
                                     onClick={() => { setPickerOpen(!pickerOpen); setPickerYear(getYear(selectedDate)); }}
                                     className="w-28 md:w-36 text-center text-xs md:text-sm font-semibold text-slate-800 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-lg py-1 transition-colors cursor-pointer"
                                 >
                                     {displayPeriodText}
                                 </button>
 
-                                <button 
-                                    onClick={handleNext} 
+                                <button
+                                    onClick={handleNext}
                                     disabled={disableNext}
                                     className={`p-1.5 rounded-lg flex items-center justify-center transition-colors ${disableNext ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'}`}
                                 >
@@ -417,11 +417,10 @@ export default function Bancos() {
                                                 <button
                                                     key={y}
                                                     onClick={() => { setSelectedDate(setYear(selectedDate, y)); setPickerOpen(false); }}
-                                                    className={`px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                                                        getYear(selectedDate) === y
-                                                            ? 'bg-slate-800 dark:bg-white text-white dark:text-slate-800 shadow-md'
-                                                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
-                                                    }`}
+                                                    className={`px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${getYear(selectedDate) === y
+                                                        ? 'bg-slate-800 dark:bg-white text-white dark:text-slate-800 shadow-md'
+                                                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                                                        }`}
                                                 >
                                                     {y}
                                                 </button>
@@ -464,13 +463,12 @@ export default function Bancos() {
                                                         key={i}
                                                         disabled={isFuture || isBeforeData}
                                                         onClick={() => { setSelectedDate(new Date(pickerYear, i, 1)); setPickerOpen(false); }}
-                                                        className={`px-2 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                                                            isSelected
-                                                                ? 'bg-slate-800 dark:bg-white text-white dark:text-slate-800 shadow-md'
-                                                                : isFuture || isBeforeData
-                                                                    ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
-                                                                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
-                                                        }`}
+                                                        className={`px-2 py-2.5 rounded-xl text-xs font-semibold transition-all ${isSelected
+                                                            ? 'bg-slate-800 dark:bg-white text-white dark:text-slate-800 shadow-md'
+                                                            : isFuture || isBeforeData
+                                                                ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                                                                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                                                            }`}
                                                     >
                                                         {label}
                                                     </button>
@@ -523,7 +521,7 @@ export default function Bancos() {
                                                 const startOffset = (getDay(firstDay) + 6) % 7;
                                                 const selectedWeekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
                                                 const selectedWeekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 });
-                                                
+
                                                 const cells = [];
                                                 for (let i = 0; i < startOffset; i++) {
                                                     cells.push(<div key={`empty-${i}`} />);
@@ -536,13 +534,12 @@ export default function Bancos() {
                                                         <button
                                                             key={day}
                                                             onClick={() => { setSelectedDate(dayDate); setPickerOpen(false); }}
-                                                            className={`py-1.5 rounded-lg text-xs font-medium transition-all ${
-                                                                isInSelectedWeek
-                                                                    ? 'bg-slate-800 dark:bg-white text-white dark:text-slate-800 shadow-sm'
-                                                                    : isToday
-                                                                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold'
-                                                                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
-                                                            }`}
+                                                            className={`py-1.5 rounded-lg text-xs font-medium transition-all ${isInSelectedWeek
+                                                                ? 'bg-slate-800 dark:bg-white text-white dark:text-slate-800 shadow-sm'
+                                                                : isToday
+                                                                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold'
+                                                                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                                                                }`}
                                                         >
                                                             {day}
                                                         </button>
@@ -649,7 +646,7 @@ export default function Bancos() {
 
             {/* INFERIOR: Cards individuales por Banco */}
             <div className="mt-2 md:mt-4">
-                <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-4 md:mb-0 z-10 text-center md:text-left">Desglose por Banco</h3>
+                <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-4 md:mb-4 z-10 text-center md:text-left">Desglose por Banco</h3>
                 <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
                     {Object.entries(banks).map(([bankName, bankData], index) => {
                         const bankColors = {

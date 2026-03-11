@@ -1,5 +1,13 @@
 # Frontend
 node_modules/
+
+# Package manager lock files (evitar conflictos entre yarn y npm)
+yarn.lock
+package-lock.json
+.yarn/
+.yarnrc.yml
+.npmrc
+.pnp.*
 dist/
 .env.development
 .env.production
