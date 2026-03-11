@@ -8,6 +8,7 @@ require('dotenv').config();
 const app = express();
 app.use(helmet()); // Seguridad de cabeceras HTTP
 app.use(cors()); // Permite que tu frontend hable con este backend
+
 app.use(express.json());
 
 // Conexión a la base de datos de producción en Dokploy
@@ -25,6 +26,7 @@ app.get('/health', async (req, res) => {
   }
 });
 
+
 // Configuración del Rate Limiter para el Login
 const loginLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minuto
@@ -32,6 +34,57 @@ const loginLimiter = rateLimit({
   message: { success: false, error: 'Demasiados intentos de inicio de sesión. Por favor, inténtalo de nuevo después de 15 minutos.' },
   standardHeaders: true, // Retorna los headers de RateLimit en la respuesta
   legacyHeaders: false, // Deshabilita los headers `X-RateLimit-*`
+});
+
+// Endpoint para obtener el resumen de bancos
+app.get('/banks-summary', async (req, res) => {
+  try {
+    const query = `
+            SELECT DISTINCT ON (b.bank_name)
+              b.bank_name AS banco,
+              ROUND(bs.balance, 2) AS saldo,
+              bs.snapshot_date AS fecha_registro,
+              b.currency AS moneda
+          FROM 
+              bank_snapshots bs
+          JOIN 
+              banks b ON bs.bank_id = b.id
+          ORDER BY 
+              b.bank_name, 
+              bs.snapshot_date DESC;
+        `;
+
+    const result = await pool.query(query);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al obtener datos de bancos" });
+  }
+});
+
+// Endpoint para obtener el histórico de bancos para el gráfico
+app.get('/banks-history', async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        b.bank_name AS banco,
+        ROUND(bs.balance, 2) AS saldo,
+        bs.snapshot_date AS fecha_registro,
+        b.currency AS moneda
+      FROM 
+        bank_snapshots bs
+      JOIN 
+        banks b ON bs.bank_id = b.id
+      ORDER BY 
+        bs.snapshot_date ASC;
+    `;
+    const result = await pool.query(query);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al obtener historial de bancos" });
+  }
+
 });
 
 // Endpoint de LOGIN REAL

@@ -8,9 +8,9 @@ const Layout = () => {
     const location = useLocation();
 
     return (
-        <div className="flex min-h-screen bg-slate-50 dark:bg-caixeta-dark transition-colors duration-300">
-            {/* Sidebar */}
-            <aside className="w-64 bg-white dark:bg-caixeta-card flex flex-col shadow-sm border-r border-slate-200 dark:border-slate-800 transition-colors duration-300">
+        <div className="flex flex-col md:flex-row min-h-screen bg-slate-50 dark:bg-caixeta-dark transition-colors duration-300">
+            {/* Sidebar (Desktop) */}
+            <aside className="hidden md:flex w-64 bg-white dark:bg-caixeta-card flex-col shadow-sm border-r border-slate-200 dark:border-slate-800 transition-colors duration-300 z-50">
                 {/* Logo Section */}
                 <div className="p-6 flex items-center space-x-3 mb-4">
                     <div className="bg-caixeta-red text-white w-8 h-8 rounded flex items-center justify-center font-bold text-lg shadow-sm">
@@ -87,9 +87,57 @@ const Layout = () => {
             </aside>
 
             {/* Contenido Principal */}
-            <main className="flex-1 p-8 overflow-y-auto">
+            <main className="flex-1 p-4 md:p-8 overflow-y-auto pb-28 md:pb-8 w-full">
                 <Outlet />
             </main>
+
+            {/* Menú Inferior (Móvil & Tablet <=768px) */}
+            <nav className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center bg-slate-100 dark:bg-slate-800/90 backdrop-blur-xl p-1.5 rounded-2xl shadow-xl border border-slate-200/80 dark:border-slate-700/80 w-[95%] max-w-[420px]">
+                <Link
+                    to="/dashboard/bancos"
+                    className={`flex-1 flex flex-col items-center justify-center py-2.5 rounded-xl transition-all duration-200 ${
+                        location.pathname.includes('/bancos')
+                            ? 'bg-white dark:bg-[#333] shadow-sm text-slate-800 dark:text-white scale-100'
+                            : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 scale-95'
+                    }`}
+                >
+                    <MdAccountBalance className={`text-xl mb-1 ${location.pathname.includes('/bancos') ? 'text-caixeta-red' : 'opacity-80'}`} />
+                    <span className="text-[10px] font-semibold tracking-wide">Bancos</span>
+                </Link>
+                <Link
+                    to="/dashboard/cobros"
+                    className={`flex-1 flex flex-col items-center justify-center py-2.5 rounded-xl transition-all duration-200 ${
+                        location.pathname.includes('/cobros')
+                            ? 'bg-white dark:bg-[#333] shadow-sm text-slate-800 dark:text-white scale-100'
+                            : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 scale-95'
+                    }`}
+                >
+                    <HiOutlineArrowTrendingDown className={`text-xl mb-1 ${location.pathname.includes('/cobros') ? 'text-caixeta-red' : 'opacity-80'}`} />
+                    <span className="text-[10px] font-semibold tracking-wide">Cobros</span>
+                </Link>
+                <Link
+                    to="/dashboard/pagos"
+                    className={`flex-1 flex flex-col items-center justify-center py-2.5 rounded-xl transition-all duration-200 ${
+                        location.pathname.includes('/pagos')
+                            ? 'bg-white dark:bg-[#333] shadow-sm text-slate-800 dark:text-white scale-100'
+                            : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 scale-95'
+                    }`}
+                >
+                    <HiOutlineArrowTrendingUp className={`text-xl mb-1 ${location.pathname.includes('/pagos') ? 'text-caixeta-red' : 'opacity-80'}`} />
+                    <span className="text-[10px] font-semibold tracking-wide">Pagos</span>
+                </Link>
+                <Link
+                    to="/dashboard/caja"
+                    className={`flex-1 flex flex-col items-center justify-center py-2.5 rounded-xl transition-all duration-200 ${
+                        location.pathname.includes('/caja')
+                            ? 'bg-white dark:bg-[#333] shadow-sm text-slate-800 dark:text-white scale-100'
+                            : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 scale-95'
+                    }`}
+                >
+                    <TbMoneybag className={`text-xl mb-1 ${location.pathname.includes('/caja') ? 'text-caixeta-red' : 'opacity-80'}`} />
+                    <span className="text-[10px] font-semibold tracking-wide">Caja</span>
+                </Link>
+            </nav>
         </div>
     );
 };
