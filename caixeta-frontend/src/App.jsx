@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
-import ThemeToggle from './components/ThemeToggle';
 import Login from './pages/Login';
 import Layout from './components/Layout';
 import Bancos from './pages/Bancos';
@@ -26,7 +25,6 @@ function App() {
   return (
     <ThemeProvider>
       <BrowserRouter>
-        <ThemeToggle />
         <Routes>
           {/* Ruta pública */}
           <Route path="/" element={<Login />} />

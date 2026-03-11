@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MdAdd, MdEdit, MdDelete, MdClose, MdAdminPanelSettings, MdCheck, MdPeopleAlt, MdAutorenew } from 'react-icons/md';
+import { MdAdd, MdEdit, MdDelete, MdClose, MdAdminPanelSettings, MdCheck, MdPeopleAlt, MdAutorenew, MdPalette, MdLightMode, MdDarkMode } from 'react-icons/md';
+import { useTheme } from '../context/ThemeContext';
 
 const AdminSettings = () => {
     const [users, setUsers] = useState([]);
@@ -21,6 +22,7 @@ const AdminSettings = () => {
 
     const navigate = useNavigate();
     const loggedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const { theme, toggleTheme } = useTheme();
 
     useEffect(() => {
         // Redirigir si no es admin, pero por seguridad, el Layout/App.jsx debería evitar que llegue aquí
@@ -237,6 +239,41 @@ const AdminSettings = () => {
                     <span>{successMsg}</span>
                 </div>
             )}
+
+            {/* Sub-sección de Ajustes de Apariencia */}
+            <div className="mb-8 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 bg-white dark:bg-caixeta-card shadow-sm">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h2 className="text-xl font-semibold text-slate-800 dark:text-white flex items-center gap-2">
+                            <MdPalette className="text-caixeta-red" />
+                            Apariencia del Sistema
+                        </h2>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Cambia entre el modo claro y oscuro para toda la interfaz.</p>
+                    </div>
+                    <div className="flex items-center gap-3 bg-slate-100 dark:bg-[#1f1f1f] p-1.5 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <button
+                            onClick={() => theme !== 'light' && toggleTheme()}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 ${
+                                theme === 'light' 
+                                ? 'bg-white text-slate-800 shadow-sm' 
+                                : 'text-slate-500 hover:text-slate-300'
+                            }`}
+                        >
+                            <MdLightMode className={theme === 'light' ? "text-yellow-500" : ""} /> Claro
+                        </button>
+                        <button
+                            onClick={() => theme !== 'dark' && toggleTheme()}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 ${
+                                theme === 'dark' 
+                                ? 'bg-[#333] text-white shadow-sm' 
+                                : 'text-slate-600 hover:text-slate-800'
+                            }`}
+                        >
+                            <MdDarkMode className={theme === 'dark' ? "text-slate-300" : ""} /> Oscuro
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             {/* Sub-sección de Ajustes de Usuarios */}
             <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
