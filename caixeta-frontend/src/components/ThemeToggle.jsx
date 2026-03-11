@@ -1,8 +1,14 @@
 import { MdLightMode, MdDarkMode } from 'react-icons/md';
 import { useTheme } from '../context/ThemeContext';
+import { useLocation } from 'react-router-dom';
 
 export default function ThemeToggle() {
     const { theme, toggleTheme } = useTheme();
+    const location = useLocation();
+
+    if (location.pathname === '/' || location.pathname === '/login') {
+        return null;
+    }
 
     return (
         <button

@@ -4,6 +4,7 @@ import ThemeToggle from './components/ThemeToggle';
 import Login from './pages/Login';
 import Layout from './components/Layout';
 import Bancos from './pages/Bancos';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
@@ -16,7 +17,11 @@ function App() {
           <Route path="/login" element={<Navigate to="/" replace />} />
           
           {/* Rutas protegidas (dentro del Layout) */}
-          <Route path="/dashboard" element={<Layout />}>
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }>
             <Route index element={
               <div className="flex flex-col items-center justify-center h-full text-center animate-in fade-in duration-500">
                 <div className="bg-caixeta-red text-white w-16 h-16 rounded-2xl flex items-center justify-center text-4xl font-bold shadow-lg shadow-caixeta-red/30 mb-6">

@@ -1,9 +1,12 @@
 const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
+app.use(helmet()); // Seguridad de cabeceras HTTP
 app.use(cors()); // Permite que tu frontend hable con este backend
 app.use(express.json());
 
@@ -22,8 +25,17 @@ app.get('/health', async (req, res) => {
   }
 });
 
+// Configuración del Rate Limiter para el Login
+const loginLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minuto
+  max: 5, // Límite de 5 peticiones por IP en la ventana de tiempo
+  message: { success: false, error: 'Demasiados intentos de inicio de sesión. Por favor, inténtalo de nuevo después de 15 minutos.' },
+  standardHeaders: true, // Retorna los headers de RateLimit en la respuesta
+  legacyHeaders: false, // Deshabilita los headers `X-RateLimit-*`
+});
+
 // Endpoint de LOGIN REAL
-app.post('/login', async (req, res) => {
+app.post('/login', loginLimiter, async (req, res) => {
   const { email, password } = req.body;
 
   try {
@@ -34,8 +46,8 @@ app.post('/login', async (req, res) => {
 
     // Comparamos el password_hash (que es 'admin123' en nuestra prueba)
     if (user && user.password_hash === password) {
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         message: 'Login correcto',
         user: { id: user.id, name: user.name, email: user.email }
       });
