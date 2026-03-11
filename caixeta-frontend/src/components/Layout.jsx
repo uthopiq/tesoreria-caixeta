@@ -13,9 +13,7 @@ const Layout = () => {
             <aside className="hidden md:flex w-64 bg-white dark:bg-caixeta-card flex-col shadow-sm border-r border-slate-200 dark:border-slate-800 transition-colors duration-300 z-50">
                 {/* Logo Section */}
                 <div className="p-6 flex items-center space-x-3 mb-4">
-                    <div className="bg-caixeta-red text-white w-8 h-8 rounded flex items-center justify-center font-bold text-lg shadow-sm">
-                        C
-                    </div>
+                    <img src="/caixeta_favicon.png" alt="Caixeta Logo" className="w-8 h-8 object-contain" />
                     <span className="text-xl font-bold text-slate-800 dark:text-white">Caixeta</span>
                 </div>
 
