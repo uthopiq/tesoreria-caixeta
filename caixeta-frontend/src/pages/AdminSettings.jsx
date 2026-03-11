@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MdAdd, MdEdit, MdDelete, MdClose, MdAdminPanelSettings, MdCheck, MdPeopleAlt, MdAutorenew, MdPalette, MdLightMode, MdDarkMode } from 'react-icons/md';
+import { MdAdd, MdEdit, MdDelete, MdClose, MdAdminPanelSettings, MdCheck, MdPeopleAlt, MdAutorenew, MdPalette, MdLightMode, MdDarkMode, MdPictureAsPdf } from 'react-icons/md';
 import { useTheme } from '../context/ThemeContext';
 
 const AdminSettings = () => {
@@ -24,6 +24,12 @@ const AdminSettings = () => {
     const loggedUser = JSON.parse(localStorage.getItem('user') || '{}');
     const { theme, toggleTheme } = useTheme();
 
+    // Export Global Settings
+    const [exportSettings, setExportSettings] = useState(() => {
+        const saved = localStorage.getItem('caixeta_export_settings') || localStorage.getItem('caixeta_pdf_settings');
+        return saved ? JSON.parse(saved) : { orientation: 'l', format: 'a4', csvSeparator: ';' };
+    });
+
     useEffect(() => {
         // Redirigir si no es admin, pero por seguridad, el Layout/App.jsx debería evitar que llegue aquí
         if (loggedUser.role !== 'admin') {
@@ -31,7 +37,13 @@ const AdminSettings = () => {
             return;
         }
         fetchUsers();
-    }, [navigate]);
+    }, [navigate, loggedUser.role]);
+
+    const handleSaveExportSettings = () => {
+        localStorage.setItem('caixeta_export_settings', JSON.stringify(exportSettings));
+        setSuccessMsg('Ajustes de exportación guardados correctamente');
+        setTimeout(() => setSuccessMsg(''), 3000);
+    };
 
     const getHeaders = () => ({
         'Content-Type': 'application/json',
@@ -241,36 +253,94 @@ const AdminSettings = () => {
             )}
 
             {/* Sub-sección de Ajustes de Apariencia */}
-            <div className="mb-8 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 bg-white dark:bg-caixeta-card shadow-sm">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                        <h2 className="text-xl font-semibold text-slate-800 dark:text-white flex items-center gap-2">
-                            <MdPalette className="text-caixeta-red" />
-                            Apariencia del Sistema
-                        </h2>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Cambia entre el modo claro y oscuro para toda la interfaz.</p>
+            <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="border border-slate-200 dark:border-slate-800 rounded-2xl p-6 bg-white dark:bg-caixeta-card shadow-sm h-full">
+                    <div className="flex flex-col justify-between h-full gap-4">
+                        <div>
+                            <h2 className="text-xl font-semibold text-slate-800 dark:text-white flex items-center gap-2">
+                                <MdPalette className="text-caixeta-red" />
+                                Apariencia del Sistema
+                            </h2>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Cambia entre el modo claro y oscuro para toda la interfaz.</p>
+                        </div>
+                        <div className="flex items-center gap-3 bg-slate-100 dark:bg-[#1f1f1f] p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 w-fit">
+                            <button
+                                onClick={() => theme !== 'light' && toggleTheme()}
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 ${
+                                    theme === 'light' 
+                                    ? 'bg-white text-slate-800 shadow-sm' 
+                                    : 'text-slate-500 hover:text-slate-300'
+                                }`}
+                            >
+                                <MdLightMode className={theme === 'light' ? "text-yellow-500" : ""} /> Claro
+                            </button>
+                            <button
+                                onClick={() => theme !== 'dark' && toggleTheme()}
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 ${
+                                    theme === 'dark' 
+                                    ? 'bg-[#333] text-white shadow-sm' 
+                                    : 'text-slate-600 hover:text-slate-800'
+                                }`}
+                            >
+                                <MdDarkMode className={theme === 'dark' ? "text-slate-300" : ""} /> Oscuro
+                            </button>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-3 bg-slate-100 dark:bg-[#1f1f1f] p-1.5 rounded-xl border border-slate-200 dark:border-slate-800">
-                        <button
-                            onClick={() => theme !== 'light' && toggleTheme()}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 ${
-                                theme === 'light' 
-                                ? 'bg-white text-slate-800 shadow-sm' 
-                                : 'text-slate-500 hover:text-slate-300'
-                            }`}
-                        >
-                            <MdLightMode className={theme === 'light' ? "text-yellow-500" : ""} /> Claro
-                        </button>
-                        <button
-                            onClick={() => theme !== 'dark' && toggleTheme()}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 ${
-                                theme === 'dark' 
-                                ? 'bg-[#333] text-white shadow-sm' 
-                                : 'text-slate-600 hover:text-slate-800'
-                            }`}
-                        >
-                            <MdDarkMode className={theme === 'dark' ? "text-slate-300" : ""} /> Oscuro
-                        </button>
+                </div>
+
+                <div className="border border-slate-200 dark:border-slate-800 rounded-2xl p-6 bg-white dark:bg-caixeta-card shadow-sm h-full">
+                    <div className="flex flex-col justify-between h-full gap-4">
+                        <div>
+                            <h2 className="text-xl font-semibold text-slate-800 dark:text-white flex items-center gap-2">
+                                <MdPictureAsPdf className="text-caixeta-red" />
+                                Ajustes de Exportación
+                            </h2>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Propiedades globales para exportar datos en PDF o CSV.</p>
+                        </div>
+                        <div className="flex flex-col gap-3">
+                            <div className="flex items-center gap-3">
+                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 w-[120px]">Orientación PDF:</label>
+                                <select 
+                                    value={exportSettings.orientation}
+                                    onChange={(e) => setExportSettings({...exportSettings, orientation: e.target.value})}
+                                    className="flex-1 px-3 py-2 bg-slate-50 dark:bg-[#2A2A2A] border border-slate-200 dark:border-slate-700 rounded-lg outline-none text-sm dark:text-white"
+                                >
+                                    <option value="l">Horizontal (Landscape)</option>
+                                    <option value="p">Vertical (Portrait)</option>
+                                </select>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 w-[120px]">Formato PDF:</label>
+                                <select 
+                                    value={exportSettings.format}
+                                    onChange={(e) => setExportSettings({...exportSettings, format: e.target.value})}
+                                    className="flex-1 px-3 py-2 bg-slate-50 dark:bg-[#2A2A2A] border border-slate-200 dark:border-slate-700 rounded-lg outline-none text-sm dark:text-white"
+                                >
+                                    <option value="a4">A4</option>
+                                    <option value="letter">Carta (Letter)</option>
+                                </select>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 w-[120px]">Separador CSV:</label>
+                                <select 
+                                    value={exportSettings.csvSeparator || ';'}
+                                    onChange={(e) => setExportSettings({...exportSettings, csvSeparator: e.target.value})}
+                                    className="flex-1 px-3 py-2 bg-slate-50 dark:bg-[#2A2A2A] border border-slate-200 dark:border-slate-700 rounded-lg outline-none text-sm dark:text-white"
+                                >
+                                    <option value=";">Punto y coma (;)</option>
+                                    <option value=",">Coma (,)</option>
+                                </select>
+                            </div>
+                            <div className="flex items-center justify-end mt-2">
+                                <button 
+                                    onClick={handleSaveExportSettings}
+                                    className="bg-slate-800 hover:bg-slate-900 dark:bg-caixeta-red dark:hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                                >
+                                    <MdCheck className="text-lg" />
+                                    Guardar Cambios
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

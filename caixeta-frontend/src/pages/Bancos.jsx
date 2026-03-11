@@ -10,7 +10,9 @@ import {
     getYear, getMonth, getDaysInMonth, getDay, setYear, setMonth as setDateMonth
 } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { MdChevronLeft, MdChevronRight } from 'react-icons/md';
+import { MdChevronLeft, MdChevronRight, MdPictureAsPdf, MdTableView } from 'react-icons/md';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 export default function Bancos() {
     const [historyData, setHistoryData] = useState([]);
@@ -24,6 +26,16 @@ export default function Bancos() {
     const [pickerOpen, setPickerOpen] = useState(false);
     const [pickerYear, setPickerYear] = useState(getYear(new Date()));
     const pickerRef = useRef(null);
+    const hiddenPrintRef = useRef(null); // Reference for the hidden official layout
+
+    const [isExporting, setIsExporting] = useState(false);
+    const [exportType, setExportType] = useState(null); // 'pdf' or 'csv'
+    
+    // Read global export settings from localStorage
+    const exportSettings = useMemo(() => {
+        const saved = localStorage.getItem('caixeta_export_settings') || localStorage.getItem('caixeta_pdf_settings');
+        return saved ? JSON.parse(saved) : { orientation: 'l', format: 'a4', csvSeparator: ';' };
+    }, []);
 
     // Close picker on click outside
     useEffect(() => {
@@ -324,6 +336,128 @@ export default function Bancos() {
         return dailyTotals[latestValidDate];
     }, [dailyTotals, selectedDate, filter, customRange]);
 
+    const handleExportPDF = async () => {
+        setIsExporting(true);
+        setExportType('pdf');
+        
+        // Artificial delay for the modal to show properly
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        try {
+            if (!hiddenPrintRef.current) return;
+            
+            // Render hidden layout to canvas
+            const canvas = await html2canvas(hiddenPrintRef.current, {
+                scale: 2, // Better quality
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            
+            const pdf = new jsPDF({
+                orientation: exportSettings.orientation,
+                unit: 'mm',
+                format: exportSettings.format
+            });
+
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+            
+            const imgProps = pdf.getImageProperties(imgData);
+            const ratio = imgProps.width / imgProps.height;
+            
+            const margin = 10;
+            const contentWidth = pdfWidth - (margin * 2);
+            const contentHeight = contentWidth / ratio;
+
+            let finalHeight = contentHeight;
+            let finalWidth = contentWidth;
+
+            // Optional pagination / scaling logic. Since it's a fixed height hidden layout, we scale it to fit one page.
+            if (contentHeight > (pdfHeight - (margin * 2))) {
+                finalHeight = pdfHeight - (margin * 2);
+                finalWidth = finalHeight * ratio;
+            }
+
+            const xOffset = margin + (contentWidth - finalWidth) / 2;
+
+            pdf.addImage(imgData, 'PNG', xOffset, margin, finalWidth, finalHeight);
+            
+            const filename = `Reporte_Tesoreria_${format(new Date(), 'yyyy-MM-dd_HH-mm')}.pdf`;
+            pdf.save(filename);
+
+        } catch (error) {
+            console.error("Error al exportar PDF:", error);
+            alert("No se pudo generar el documento pdf.");
+        } finally {
+            setIsExporting(false);
+            setExportType(null);
+        }
+    };
+
+    const handleExportCSV = async () => {
+        setIsExporting(true);
+        setExportType('csv');
+
+        // Artificial delay for the modal to show properly
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        try {
+            if (!chartData || chartData.length === 0) {
+                alert("No hay datos para exportar.");
+                return;
+            }
+
+            const separator = exportSettings.csvSeparator || ';';
+            
+            // Extract unique bank names
+            const allKeys = new Set();
+            chartData.forEach(day => {
+                Object.keys(day).forEach(key => {
+                    if (key !== 'name' && key !== 'date' && key !== 'total') {
+                        allKeys.add(key);
+                    }
+                });
+            });
+            const bankNames = Array.from(allKeys);
+
+            // Create Header
+            let csvContent = `Fecha${separator}Total Consolidado`;
+            bankNames.forEach(bank => {
+                csvContent += `${separator}Banco: ${bank.charAt(0).toUpperCase() + bank.slice(1)}`;
+            });
+            csvContent += '\r\n';
+
+            // Create Rows
+            chartData.forEach(day => {
+                const dateKey = day.date || day.name; // Fallback to name if date missing
+                let row = `${dateKey}${separator}${day.total || 0}`;
+                bankNames.forEach(bank => {
+                    row += `${separator}${day[bank] || 0}`;
+                });
+                csvContent += row + '\r\n';
+            });
+
+            // Trigger Download
+            const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' }); // \ufeff is BOM for Excel UTF-8 support
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `Reporte_Tesoreria_${format(new Date(), 'yyyy-MM-dd_HH-mm')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+        } catch (error) {
+            console.error("Error al exportar CSV:", error);
+            alert("No se pudo generar el documento csv.");
+        } finally {
+            setIsExporting(false);
+            setExportType(null);
+        }
+    };
+
 
     if (loading) {
         return (
@@ -337,11 +471,31 @@ export default function Bancos() {
     const { total, banks } = displayData || { total: 0, banks: {} };
 
     return (
-        <div className="animate-in fade-in duration-500 flex flex-col gap-6">
+        <div className="animate-in fade-in duration-500 flex flex-col gap-6 bg-slate-50 dark:bg-caixeta-dark relative">
+            
             <div className="sticky top-0 z-40 dark:bg-caixeta-dark/80 backdrop-blur-md pt-3 pb-3 md:pt-4 md:pb-4 border-b border-transparent flex flex-col xl:flex-row items-center justify-between w-full transition-colors duration-300 md:pr-16 gap-3 md:gap-4 px-1">
-                <h1 className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-white z-10 text-center xl:text-left flex-shrink-0">
-                    Tesorería
-                </h1>
+                <div className="flex items-center gap-3 z-10 text-center xl:text-left flex-shrink-0">
+                    <h1 className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-white">
+                        Tesorería
+                    </h1>
+                    <div className="flex items-center gap-2">
+                        <button 
+                            onClick={handleExportCSV}
+                            className="bg-slate-100 hover:bg-slate-200 dark:bg-[#2A2A2A] dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 p-2 rounded-xl transition-colors shadow-sm"
+                            title="Exportar a CSV"
+                        >
+                            <MdTableView className="text-xl text-emerald-500" />
+                        </button>
+                        <button 
+                            onClick={handleExportPDF}
+                            disabled={isExporting}
+                            className="bg-slate-100 hover:bg-slate-200 dark:bg-[#2A2A2A] dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 p-2 rounded-xl transition-colors shadow-sm disabled:opacity-50"
+                            title="Exportar a PDF"
+                        >
+                            <MdPictureAsPdf className="text-xl text-red-500" />
+                        </button>
+                    </div>
+                </div>
 
                 <div className="flex flex-col xl:flex-row items-center gap-2 md:gap-3 z-20 w-full xl:w-auto">
                     {/* Selector de periodo (Mes/Año/Semana específico o Custom) */}
@@ -728,6 +882,126 @@ export default function Bancos() {
                 </div>
             </div>
 
+            {/* Hidden Official PDF Layout Template */}
+            <div className="absolute top-0 left-[-9999px] z-[-1]">
+                <div 
+                    ref={hiddenPrintRef} 
+                    className="bg-white text-slate-900 mx-auto"
+                    style={{ 
+                        width: exportSettings.orientation === 'l' ? 
+                            (exportSettings.format === 'letter' ? '1397px' : '1448px') : 
+                            (exportSettings.format === 'letter' ? '1080px' : '1024px'), 
+                        padding: '40px', 
+                        minHeight: exportSettings.orientation === 'l' ? 
+                            (exportSettings.format === 'letter' ? '1080px' : '1024px') : 
+                            (exportSettings.format === 'letter' ? '1397px' : '1448px')
+                    }} // Standardized internal dimensions for high-res render based on settings
+                >
+                    {/* Official Header */}
+                    <div className="flex justify-between items-end border-b-2 border-slate-200 pb-6 mb-8">
+                        <div className="flex flex-col">
+                            <img src="/logo.png" alt="Caixeta Logo" className="h-[70px] w-auto object-contain mb-2" />
+                            <p className="text-slate-500 font-medium tracking-widest uppercase text-sm mt-1">Informe de gestión</p>
+                        </div>
+                        <div className="text-right flex flex-col items-end">
+                            <h1 className="text-2xl font-bold text-slate-800">Reporte de Tesorería</h1>
+                            <p className="text-slate-500 mt-1 max-w-[200px]">
+                                Periodo: {displayPeriodText} <br/>
+                                Emisión: {format(new Date(), 'dd/MM/yyyy HH:mm')}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Consolidado */}
+                    <div className="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden mb-8">
+                        <div className="p-8 border-b border-slate-200 bg-white">
+                            <p className="text-slate-500 font-bold uppercase tracking-wider text-sm mb-2">
+                                Saldo Total Consolidado
+                            </p>
+                            <h2 className="text-5xl font-bold text-slate-900">
+                                {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(total)}
+                            </h2>
+                        </div>
+                        <div className="p-8 h-[350px] w-full bg-white">
+                            {chartData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={chartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 12 }} dy={10} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 12 }} tickFormatter={(val) => `${(val / 1000).toFixed(0)}k €`} />
+                                        <Area type="monotone" dataKey="total" stroke="#10B981" strokeWidth={3} fillOpacity={0.1} fill="#10B981" isAnimationActive={false} />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-slate-500">Sin suficientes datos.</div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Desglose de bancos */}
+                    <h3 className="text-2xl font-bold text-slate-900 mb-6 border-b border-slate-100 pb-2">Desglose por Entidad</h3>
+                    <div className={`grid ${exportSettings.orientation === 'l' ? 'grid-cols-3' : 'grid-cols-2'} gap-6`}>
+                        {Object.entries(banks).map(([bankName, bankData], index) => {
+                            const bankColors = {
+                                'bbva': '#001390', 'santander': '#EC0000', 'sabadell': '#006DFF', 'la caixa': '#009AD8', 'bankinter': '#F76900'
+                            };
+                            const color = bankColors[bankName.toLowerCase()] || '#3B82F6';
+                            return (
+                                <div key={index} className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+                                    <p className="text-slate-500 text-sm uppercase font-bold mb-1">{bankName}</p>
+                                    <p className="text-3xl font-bold text-slate-900 mb-4">
+                                        {new Intl.NumberFormat('es-ES', { style: 'currency', currency: bankData.moneda || 'EUR' }).format(bankData.saldo)}
+                                    </p>
+                                    <div className="h-[150px] w-full -ml-4 -mr-4">
+                                        {chartData.length > 0 && chartData.some(d => d[bankName] !== undefined) ? (
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 10 }} dy={8} />
+                                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 10 }} tickFormatter={(val) => val >= 1000 ? `${(val/1000).toFixed(0)}k` : val} />
+                                                    <Area type="monotone" dataKey={bankName} stroke={color} strokeWidth={2} fillOpacity={0.1} fill={color} isAnimationActive={false} />
+                                                </AreaChart>
+                                            </ResponsiveContainer>
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-xs text-slate-400">Sin datos</div>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
+            {/* End Hidden Template */}
+            
+            {/* Exporting Modal Overlay */}
+            {isExporting && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-[#1E1E1E] rounded-2xl p-8 max-w-sm w-full mx-4 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] border border-slate-200/50 dark:border-slate-700/50 flex flex-col items-center animate-in zoom-in-95 duration-200">
+                        {/* Spinner Animation */}
+                        <div className="relative mb-6 w-16 h-16">
+                            <div className="absolute inset-0 rounded-full border-[3px] border-slate-100 dark:border-slate-800"></div>
+                            <div className="absolute inset-0 rounded-full border-[3px] border-caixeta-red border-t-transparent animate-spin"></div>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                {exportType === 'pdf' ? (
+                                    <MdPictureAsPdf className="text-caixeta-red text-xl" />
+                                ) : (
+                                    <MdTableView className="text-emerald-500 text-xl" />
+                                )}
+                            </div>
+                        </div>
+                        
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-white text-center mb-2">
+                            {exportType === 'pdf' ? 'Generando PDF Oficial' : 'Generando Reporte CSV'}
+                        </h3>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm text-center">
+                            {exportType === 'pdf' 
+                                ? 'Preparando el documento, aplicando configuraciones y calculando proporciones. Por favor, espera unos segundos.' 
+                                : 'Extrayendo datos de la tabla y formateando el documento para excel. Esto tomará solo un momento.'}
+                        </p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
