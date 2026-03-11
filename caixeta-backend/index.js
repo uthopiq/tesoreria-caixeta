@@ -162,6 +162,44 @@ app.post('/login', loginLimiter, async (req, res) => {
 
 // --- ENDPOINTS ADMINISTRADOR (CRUD USUARIOS) ---
 
+// Verificar contraseña de administrador (Capa de seguridad extra)
+app.post('/admin/verify-password', isAdmin, async (req, res) => {
+  const userId = req.headers['x-user-id'];
+  const { password } = req.body;
+
+  if (!password) {
+    return res.status(400).json({ success: false, error: 'Falta la contraseña' });
+  }
+
+  try {
+    const query = 'SELECT password_hash FROM users WHERE id = $1';
+    const result = await pool.query(query, [userId]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
+    }
+
+    const user = result.rows[0];
+    let isMatch = false;
+    
+    // Soporte para bcrypt o texto plano antiguo
+    if (user.password_hash.startsWith('$2')) {
+        isMatch = await bcrypt.compare(password, user.password_hash);
+    } else {
+        isMatch = user.password_hash === password;
+    }
+
+    if (isMatch) {
+      res.json({ success: true, message: 'Contraseña verificada correctamente' });
+    } else {
+      res.status(401).json({ success: false, error: 'Contraseña incorrecta' });
+    }
+  } catch (err) {
+    console.error('Error al verificar contraseña:', err);
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+  }
+});
+
 // Obtener todos los usuarios
 app.get('/admin/users', isAdmin, async (req, res) => {
   try {

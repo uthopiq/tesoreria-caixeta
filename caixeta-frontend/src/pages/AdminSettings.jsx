@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MdAdd, MdEdit, MdDelete, MdClose, MdAdminPanelSettings, MdCheck, MdPeopleAlt, MdAutorenew, MdPalette, MdLightMode, MdDarkMode, MdPictureAsPdf } from 'react-icons/md';
+import { MdAdd, MdEdit, MdDelete, MdClose, MdAdminPanelSettings, MdCheck, MdPeopleAlt, MdAutorenew, MdPalette, MdLightMode, MdDarkMode, MdPictureAsPdf, MdLock, MdLockOpen } from 'react-icons/md';
 import { useTheme } from '../context/ThemeContext';
 
 const AdminSettings = () => {
@@ -19,6 +19,12 @@ const AdminSettings = () => {
     // Delete Confirmation state
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [userToDelete, setUserToDelete] = useState(null);
+
+    // Security Lock state
+    const [isUsersUnlocked, setIsUsersUnlocked] = useState(false);
+    const [unlockPassword, setUnlockPassword] = useState('');
+    const [unlockError, setUnlockError] = useState('');
+    const [isUnlocking, setIsUnlocking] = useState(false);
 
     const navigate = useNavigate();
     const loggedUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -49,6 +55,34 @@ const AdminSettings = () => {
         'Content-Type': 'application/json',
         'X-User-Id': loggedUser.id
     });
+
+    const handleUnlockUsers = async (e) => {
+        e.preventDefault();
+        setIsUnlocking(true);
+        setUnlockError('');
+
+        try {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/verify-password`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({ password: unlockPassword })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setIsUsersUnlocked(true);
+                setUnlockPassword('');
+                fetchUsers(); // Refresh when unlocking
+            } else {
+                setUnlockError(data.error || 'Contraseña incorrecta');
+            }
+        } catch (err) {
+            setUnlockError('Error al contactar con el servidor');
+        } finally {
+            setIsUnlocking(false);
+        }
+    };
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -354,20 +388,62 @@ const AdminSettings = () => {
                     </h2>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Gestiona los accesos y roles (Admin, Contabilidad, Caja).</p>
                 </div>
-                <button
-                    onClick={() => handleOpenModal('create')}
-                    className="bg-slate-800 hover:bg-slate-900 dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 text-white px-4 py-2 rounded-xl font-medium transition-colors flex items-center gap-2 text-sm shadow-md"
-                >
-                    <MdAdd className="text-lg" /> Añadir Usuario
-                </button>
+                {isUsersUnlocked && (
+                    <button
+                        onClick={() => handleOpenModal('create')}
+                        className="bg-slate-800 hover:bg-slate-900 dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 text-white px-4 py-2 rounded-xl font-medium transition-colors flex items-center gap-2 text-sm shadow-md"
+                    >
+                        <MdAdd className="text-lg" /> Añadir Usuario
+                    </button>
+                )}
             </div>
 
-            {/* Tabla de Usuarios */}
-            <div className="bg-white dark:bg-caixeta-card rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-slate-50 dark:bg-[#1f1f1f] border-b border-slate-200 dark:border-slate-800">
+            {/* Lock Screen o Tabla de Usuarios */}
+            {!isUsersUnlocked ? (
+                <div className="bg-white dark:bg-caixeta-card rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-12 flex flex-col items-center justify-center text-center animate-in fade-in zoom-in-95 duration-300">
+                    <div className="bg-slate-100 dark:bg-[#1E1E1E] p-5 rounded-full mb-6">
+                        <MdLock className="text-5xl text-slate-400 dark:text-slate-500" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Sección Bloqueada</h3>
+                    <p className="text-slate-500 dark:text-slate-400 max-w-md mb-8">
+                        Por motivos de seguridad, necesitas confirmar tu identidad como administrador para ver y modificar los datos de acceso del resto de usuarios.
+                    </p>
+                    
+                    <form onSubmit={handleUnlockUsers} className="flex flex-col gap-4 w-full max-w-sm">
+                        <div className="flex flex-col text-left">
+                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tu contraseña de administrador</label>
+                            <input 
+                                type="password" 
+                                value={unlockPassword}
+                                onChange={(e) => setUnlockPassword(e.target.value)}
+                                className="w-full px-4 py-3 bg-slate-50 dark:bg-[#1f1f1f] border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-caixeta-red/20 focus:border-caixeta-red dark:text-white transition-all text-center tracking-widest"
+                                placeholder="••••••••"
+                                required
+                            />
+                        </div>
+                        {unlockError && <p className="text-red-500 text-sm font-medium">{unlockError}</p>}
+                        <button 
+                            type="submit"
+                            disabled={isUnlocking}
+                            className="w-full bg-slate-900 hover:bg-slate-800 dark:bg-caixeta-red dark:hover:bg-red-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+                        >
+                            {isUnlocking ? (
+                                <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
+                            ) : (
+                                <>
+                                    <MdLockOpen className="text-xl" />
+                                    Desbloquear
+                                </>
+                            )}
+                        </button>
+                    </form>
+                </div>
+            ) : (
+                <div className="bg-white dark:bg-caixeta-card rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden animate-in fade-in duration-500">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-slate-50 dark:bg-[#1f1f1f] border-b border-slate-200 dark:border-slate-800">
                                 <th className="py-4 px-6 text-sm font-semibold text-slate-600 dark:text-slate-400">Nombre</th>
                                 <th className="py-4 px-6 text-sm font-semibold text-slate-600 dark:text-slate-400">Email</th>
                                 <th className="py-4 px-6 text-sm font-semibold text-slate-600 dark:text-slate-400 mt-2 md:mt-0">Rol</th>
@@ -428,6 +504,7 @@ const AdminSettings = () => {
                     </table>
                 </div>
             </div>
+            )}
 
             {/* Modal Crear/Editar */}
             {isModalOpen && (
