@@ -4,6 +4,9 @@ dist/
 .env.development
 .env.production
 
+# Backend
+/caixeta-backend/.env
+
 # Backend Python (Bridge API)
 __pycache__/
 *.py[cod]
