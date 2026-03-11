@@ -157,15 +157,6 @@ function Login() {
                     >
                         {lockoutTime > 0 ? `Bloqueado (${lockoutTime}s)` : (loading ? 'Verificando...' : 'Iniciar Sesión')}
                     </button>
-
-                    <div className="mt-8 text-center border-t border-slate-100 dark:border-slate-800 pt-6">
-                        <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">Acceso de Producción:</p>
-                        <div className="flex justify-center gap-2 text-xs">
-                            <span className="px-3 py-1 bg-slate-100 dark:bg-[#2A2A2A] rounded-full text-slate-600 dark:text-slate-400 font-medium">
-                                admin@caixeta.com
-                            </span>
-                        </div>
-                    </div>
                 </form>
             </div>
         </div>
