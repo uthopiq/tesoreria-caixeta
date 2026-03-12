@@ -3,6 +3,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import Login from './pages/Login';
 import Layout from './components/Layout';
 import Bancos from './pages/Bancos';
+import Cobros from './pages/Cobros';
 import AdminSettings from './pages/AdminSettings';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -48,7 +49,7 @@ function App() {
             
             {/* Rutas para admin y accountant */}
             <Route path="bancos" element={<RoleRoute allowedRoles={['admin', 'accountant']}><Bancos /></RoleRoute>} />
-            <Route path="cobros" element={<RoleRoute allowedRoles={['admin', 'accountant']}><div className="text-slate-800 dark:text-white"><h1 className="text-3xl font-bold mb-6">Cobros</h1><p>Vista de cobros en construcción...</p></div></RoleRoute>} />
+            <Route path="cobros" element={<RoleRoute allowedRoles={['admin', 'accountant']}><Cobros /></RoleRoute>} />
             <Route path="pagos" element={<RoleRoute allowedRoles={['admin', 'accountant']}><div className="text-slate-800 dark:text-white"><h1 className="text-3xl font-bold mb-6">Pagos</h1><p>Vista de pagos en construcción...</p></div></RoleRoute>} />
             
             {/* Ruta para todos los roles (Caja) */}
