@@ -128,7 +128,7 @@ const Layout = () => {
             </aside>
 
             {/* Contenido Principal */}
-            <main className="flex-1 p-4 md:p-8 overflow-y-auto pb-28 md:pb-8 w-full bg-slate-50 dark:bg-caixeta-dark">
+            <main className="flex-1 p-4 md:p-8 flex flex-col min-h-0 overflow-y-auto pb-28 md:pb-8 w-full bg-slate-50 dark:bg-caixeta-dark">
                 <Outlet />
             </main>
 

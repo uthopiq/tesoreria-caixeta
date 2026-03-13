@@ -459,6 +459,136 @@ app.get('/api/invoices/pending', async (req, res) => {
   }
 });
 
+// ENDPOINT PARA CONFIRMAR CONCILIACIÓN (El corazón del flujo)
+app.post('/api/reconcile', async (req, res) => {
+  const { transactionId, invoiceId, userId, amount, concept } = req.body;
+  const client = await pool.connect(); // Usamos cliente para transacciones SQL
+
+  try {
+    await client.query('BEGIN'); // Iniciamos transacción
+
+    // 1. Actualizar el estado de la transacción bancaria
+    await client.query(
+      "UPDATE bank_transactions SET status = 'conciliated' WHERE id = $1",
+      [transactionId]
+    );
+
+    // 2. Restar el importe de la factura en Factusol (Local)
+    const invRes = await client.query(
+      "UPDATE factusol_invoices SET pending_amount = pending_amount - $1 WHERE id = $2 RETURNING entity_id",
+      [amount, invoiceId]
+    );
+    const entityId = invRes.rows[0].entity_id;
+
+    // 3. Crear el registro oficial de conciliación
+    await client.query(
+      `INSERT INTO conciliations (id, transaction_id, invoice_id, user_id, amount_reconciled, match_confidence) 
+             VALUES (gen_random_uuid(), $1, $2, $3, $4, 100)`,
+      [transactionId, invoiceId, userId, amount]
+    );
+
+    // 4. APRENDIZAJE: Guardar el patrón en learning_patterns
+    // Limpiamos el concepto (quitamos números de factura) para guardar la "raíz"
+    const patternValue = concept.replace(/[0-9]/g, '').trim().substring(0, 30);
+    await client.query(
+      `INSERT INTO learning_patterns (id, entity_id, pattern_type, pattern_value)
+             VALUES (gen_random_uuid(), $1, 'concept_root', $2)
+             ON CONFLICT DO NOTHING`,
+      [entityId, patternValue]
+    );
+
+    await client.query('COMMIT'); // Guardamos todo
+    res.json({ success: true, message: 'Conciliación completada y aprendizaje guardado' });
+
+  } catch (err) {
+    await client.query('ROLLBACK'); // Si algo falla, deshacemos todo
+    console.error(err);
+    res.status(500).json({ error: 'Fallo crítico en la conciliación' });
+  } finally {
+    client.release();
+  }
+});
+
+// ENDPOINT PARA IGNORAR TRASACCIÓN
+app.post('/api/transactions/ignore', async (req, res) => {
+  const { id } = req.body;
+  try {
+    await pool.query("UPDATE bank_transactions SET status = 'ignored' WHERE id = $1", [id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al ignorar' });
+  }
+});
+
+
+app.post('/api/reconcile-multi', async (req, res) => {
+  const { transactionId, assignments, userId, totalAmount, concept } = req.body;
+  // assignments es un array: [{ invoiceId: '...', amount: 100 }, ...]
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    for (let asig of assignments) {
+      // 1. Restar el importe parcial a cada factura
+      await client.query(
+        "UPDATE factusol_invoices SET pending_amount = pending_amount - $1 WHERE id = $2",
+        [asig.amount, asig.invoiceId]
+      );
+
+      // 2. Crear un registro en conciliaciones por cada factura vinculada
+      await client.query(
+        `INSERT INTO conciliations (id, transaction_id, invoice_id, user_id, amount_reconciled, match_confidence) 
+                 VALUES (gen_random_uuid(), $1, $2, $3, $4, 100)`,
+        [transactionId, asig.invoiceId, userId, asig.amount]
+      );
+    }
+
+    // 3. Marcar transacción como conciliada
+    await client.query("UPDATE bank_transactions SET status = 'conciliated' WHERE id = $1", [transactionId]);
+
+    await client.query('COMMIT');
+    res.json({ success: true });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+// Endpoint para Clasificación Manual (Otros Ingresos)
+// Endpoint para Clasificación Manual (Otros Ingresos) con Aprendizaje
+app.post('/api/classify-manual', async (req, res) => {
+  const { transactionId, category, notes, concept, userId } = req.body;
+
+  try {
+    // 1. Marcamos la transacción como conciliada y guardamos categoría/notas
+    await pool.query(
+      "UPDATE bank_transactions SET status = 'conciliated', category = $1, notes = $2 WHERE id = $3",
+      [category, notes, transactionId]
+    );
+
+    // 2. APRENDIZAJE: Guardamos el patrón. 
+    // El 'pattern_value' es el texto del banco y 'notes' guardará la CATEGORÍA para el futuro.
+    const patternValue = concept.replace(/[0-9]/g, '').trim().substring(0, 30);
+
+    await pool.query(
+      `INSERT INTO learning_patterns (id, pattern_type, pattern_value, notes) 
+             VALUES (gen_random_uuid(), 'manual_category', $1, $2) 
+             ON CONFLICT DO NOTHING`,
+      [patternValue, category]
+    );
+
+    res.json({ success: true, message: 'Ingreso clasificado correctamente' });
+  } catch (err) {
+    console.error(err);
+    // Enviamos el error para que el frontend lo detecte y lo ponga en ROJO
+    res.status(500).json({ error: 'Error en la base de datos: ' + err.message });
+  }
+});
+
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Backend de Caixeta corriendo en el puerto ${PORT}`);
