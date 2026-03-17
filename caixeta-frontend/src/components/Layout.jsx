@@ -8,7 +8,7 @@ const Layout = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-    
+
     // Obtener los datos del usuario logueado
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const isAdmin = user.role === 'admin';
@@ -42,31 +42,28 @@ const Layout = () => {
                         <>
                             <Link
                                 to="/dashboard/bancos"
-                                className={`flex items-center px-4 py-3 rounded-xl transition-all duration-200 ${
-                                    location.pathname.includes('/bancos')
-                                        ? 'bg-red-50 dark:bg-red-900/20 text-caixeta-red font-medium'
-                                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#2A2A2A]'
-                                }`}
+                                className={`flex items-center px-4 py-3 rounded-xl transition-all duration-200 ${location.pathname.includes('/bancos')
+                                    ? 'bg-red-50 dark:bg-red-900/20 text-caixeta-red font-medium'
+                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#2A2A2A]'
+                                    }`}
                             >
                                 <MdAccountBalance className="mr-3 text-xl" /> Bancos
                             </Link>
                             <Link
                                 to="/dashboard/cobros"
-                                className={`flex items-center px-4 py-3 rounded-xl transition-all duration-200 ${
-                                    location.pathname.includes('/cobros')
-                                        ? 'bg-red-50 dark:bg-red-900/20 text-caixeta-red font-medium'
-                                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#2A2A2A]'
-                                }`}
+                                className={`flex items-center px-4 py-3 rounded-xl transition-all duration-200 ${location.pathname.includes('/cobros')
+                                    ? 'bg-red-50 dark:bg-red-900/20 text-caixeta-red font-medium'
+                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#2A2A2A]'
+                                    }`}
                             >
                                 <HiOutlineArrowTrendingDown className="mr-3 text-xl" /> Cobros
                             </Link>
                             <Link
                                 to="/dashboard/pagos"
-                                className={`flex items-center px-4 py-3 rounded-xl transition-all duration-200 ${
-                                    location.pathname.includes('/pagos')
-                                        ? 'bg-red-50 dark:bg-red-900/20 text-caixeta-red font-medium'
-                                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#2A2A2A]'
-                                }`}
+                                className={`flex items-center px-4 py-3 rounded-xl transition-all duration-200 ${location.pathname.includes('/pagos')
+                                    ? 'bg-red-50 dark:bg-red-900/20 text-caixeta-red font-medium'
+                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#2A2A2A]'
+                                    }`}
                             >
                                 <HiOutlineArrowTrendingUp className="mr-3 text-xl" /> Pagos
                             </Link>
@@ -74,25 +71,23 @@ const Layout = () => {
                     )}
                     <Link
                         to="/dashboard/caja"
-                        className={`flex items-center px-4 py-3 rounded-xl transition-all duration-200 ${
-                            location.pathname.includes('/caja')
-                                ? 'bg-red-50 dark:bg-red-900/20 text-caixeta-red font-medium'
-                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#2A2A2A]'
-                        }`}
+                        className={`flex items-center px-4 py-3 rounded-xl transition-all duration-200 ${location.pathname.includes('/caja')
+                            ? 'bg-red-50 dark:bg-red-900/20 text-caixeta-red font-medium'
+                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#2A2A2A]'
+                            }`}
                     >
                         <TbMoneybag className="mr-3 text-xl" /> Caja
                     </Link>
-                    
+
                     {isAdmin && (
                         <div className="pt-4 mt-2 border-t border-slate-200 dark:border-slate-800/50">
                             <p className="px-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Administración</p>
                             <Link
                                 to="/dashboard/settings"
-                                className={`flex items-center px-4 py-3 rounded-xl transition-all duration-200 ${
-                                    location.pathname.includes('/settings')
-                                        ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 font-medium'
-                                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#2A2A2A]'
-                                }`}
+                                className={`flex items-center px-4 py-3 rounded-xl transition-all duration-200 ${location.pathname.includes('/settings')
+                                    ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 font-medium'
+                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#2A2A2A]'
+                                    }`}
                             >
                                 <MdAdminPanelSettings className="mr-3 text-xl" /> Ajustes
                             </Link>
@@ -138,63 +133,58 @@ const Layout = () => {
                     <>
                         <Link
                             to="/dashboard/bancos"
-                            className={`flex-1 flex flex-col items-center justify-center py-2.5 rounded-xl transition-all duration-200 ${
-                                location.pathname.includes('/bancos')
-                                    ? 'bg-white dark:bg-[#333] shadow-sm text-slate-800 dark:text-white scale-100'
-                                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 scale-95'
-                            }`}
+                            className={`flex-1 flex flex-col items-center justify-center py-2.5 rounded-xl transition-all duration-200 ${location.pathname.includes('/bancos')
+                                ? 'bg-white dark:bg-[#333] shadow-sm text-slate-800 dark:text-white scale-100'
+                                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 scale-95'
+                                }`}
                         >
                             <MdAccountBalance className={`text-xl mb-1 ${location.pathname.includes('/bancos') ? 'text-caixeta-red' : 'opacity-80'}`} />
                             <span className="text-[10px] font-semibold tracking-wide">Bancos</span>
                         </Link>
                         <Link
                             to="/dashboard/cobros"
-                            className={`flex-1 flex flex-col items-center justify-center py-2.5 rounded-xl transition-all duration-200 ${
-                                location.pathname.includes('/cobros')
-                                    ? 'bg-white dark:bg-[#333] shadow-sm text-slate-800 dark:text-white scale-100'
-                                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 scale-95'
-                            }`}
+                            className={`flex-1 flex flex-col items-center justify-center py-2.5 rounded-xl transition-all duration-200 ${location.pathname.includes('/cobros')
+                                ? 'bg-white dark:bg-[#333] shadow-sm text-slate-800 dark:text-white scale-100'
+                                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 scale-95'
+                                }`}
                         >
                             <HiOutlineArrowTrendingDown className={`text-xl mb-1 ${location.pathname.includes('/cobros') ? 'text-caixeta-red' : 'opacity-80'}`} />
                             <span className="text-[10px] font-semibold tracking-wide">Cobros</span>
                         </Link>
                         <Link
                             to="/dashboard/pagos"
-                            className={`flex-1 flex flex-col items-center justify-center py-2.5 rounded-xl transition-all duration-200 ${
-                                location.pathname.includes('/pagos')
-                                    ? 'bg-white dark:bg-[#333] shadow-sm text-slate-800 dark:text-white scale-100'
-                                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 scale-95'
-                            }`}
+                            className={`flex-1 flex flex-col items-center justify-center py-2.5 rounded-xl transition-all duration-200 ${location.pathname.includes('/pagos')
+                                ? 'bg-white dark:bg-[#333] shadow-sm text-slate-800 dark:text-white scale-100'
+                                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 scale-95'
+                                }`}
                         >
                             <HiOutlineArrowTrendingUp className={`text-xl mb-1 ${location.pathname.includes('/pagos') ? 'text-caixeta-red' : 'opacity-80'}`} />
                             <span className="text-[10px] font-semibold tracking-wide">Pagos</span>
                         </Link>
                     </>
                 )}
-                
+
                 <Link
                     to="/dashboard/caja"
-                    className={`flex-1 flex flex-col items-center justify-center py-2.5 rounded-xl transition-all duration-200 ${
-                        location.pathname.includes('/caja') || (!canSeeFullMenu && location.pathname === '/dashboard')
-                            ? 'bg-white dark:bg-[#333] shadow-sm text-slate-800 dark:text-white scale-100'
-                            : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 scale-95'
-                    }`}
+                    className={`flex-1 flex flex-col items-center justify-center py-2.5 rounded-xl transition-all duration-200 ${location.pathname.includes('/caja') || (!canSeeFullMenu && location.pathname === '/dashboard')
+                        ? 'bg-white dark:bg-[#333] shadow-sm text-slate-800 dark:text-white scale-100'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 scale-95'
+                        }`}
                 >
-                    <TbMoneybag className={`text-xl mb-1 ${location.pathname.includes('/caja') || (!canSeeFullMenu && location.pathname === '/dashboard')  ? 'text-caixeta-red' : 'opacity-80'}`} />
+                    <TbMoneybag className={`text-xl mb-1 ${location.pathname.includes('/caja') || (!canSeeFullMenu && location.pathname === '/dashboard') ? 'text-caixeta-red' : 'opacity-80'}`} />
                     <span className="text-[10px] font-semibold tracking-wide">Caja</span>
                 </Link>
 
                 {isAdmin && (
                     <Link
                         to="/dashboard/settings"
-                        className={`flex-1 flex flex-col items-center justify-center py-2.5 rounded-xl transition-all duration-200 ${
-                            location.pathname.includes('/settings')
-                                ? 'bg-white dark:bg-[#333] shadow-sm text-purple-600 dark:text-purple-400 scale-100'
-                                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 scale-95'
-                        }`}
+                        className={`flex-1 flex flex-col items-center justify-center py-2.5 rounded-xl transition-all duration-200 ${location.pathname.includes('/settings')
+                            ? 'bg-white dark:bg-[#333] shadow-sm text-purple-600 dark:text-purple-400 scale-100'
+                            : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 scale-95'
+                            }`}
                     >
                         <MdAdminPanelSettings className={`text-xl mb-1 ${location.pathname.includes('/settings') ? 'text-purple-600' : 'opacity-80'}`} />
-                        <span className="text-[10px] font-semibold tracking-wide text-purple-600 dark:text-purple-400">Ajustes</span>
+                        <span className="text-[10px] font-semibold tracking-wide dark:text-purple-400">Ajustes</span>
                     </Link>
                 )}
             </nav>

@@ -655,6 +655,87 @@ app.get('/api/payments/forecast', async (req, res) => {
     res.json(result.rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
+
+// A. Obtener Estado Actual (Card superior)
+app.get('/api/cash/status', async (req, res) => {
+  try {
+    const result = await pool.query("SELECT current_cash_balance FROM cash_registers LIMIT 1");
+    res.json(result.rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// B. Registrar Movimiento Físico (Entrada/Salida)
+app.post('/api/cash/movement', async (req, res) => {
+  const { amount, reason, userId, type } = req.body;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // 1. Consultamos el saldo actual para validar
+    const balanceRes = await client.query("SELECT current_cash_balance FROM cash_registers LIMIT 1");
+    const currentBalance = parseFloat(balanceRes.rows[0].current_cash_balance);
+    const change = type === 'out' ? -Math.abs(amount) : Math.abs(amount);
+
+    // 2. REGLA DE ORO: No permitimos saldo negativo en físico
+    if (currentBalance + change < 0) {
+      return res.status(400).json({ error: "Operación cancelada: No hay suficiente efectivo en caja." });
+    }
+
+    // 3. Si todo ok, registramos y actualizamos
+    await client.query(
+      "INSERT INTO cash_movements (id, register_id, user_id, amount, reason, created_at) VALUES (gen_random_uuid(), (SELECT id FROM cash_registers LIMIT 1), $1, $2, $3, NOW())",
+      [userId, change, reason]
+    );
+    await client.query("UPDATE cash_registers SET current_cash_balance = current_cash_balance + $1", [change]);
+
+    await client.query('COMMIT');
+    res.json({ success: true, newBalance: currentBalance + change });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: err.message });
+  } finally { client.release(); }
+});
+
+// C. Datos para el Gráfico (Efectivo + Tarjetas Factusol)
+app.get('/api/cash/chart', async (req, res) => {
+  const { startDate, endDate } = req.query;
+  try {
+    const query = `
+            SELECT 
+                DATE(created_at) as fecha,
+                SUM(CASE WHEN payment_method = 'cash' THEN total_amount ELSE 0 END) as efectivo,
+                SUM(CASE WHEN payment_method = 'card' THEN total_amount ELSE 0 END) as tarjeta,
+                SUM(total_amount) as total
+            FROM factusol_invoices
+            WHERE is_pos = true 
+              AND DATE(created_at) >= $1  -- Comparamos solo la parte de la FECHA
+              AND DATE(created_at) <= $2  -- Comparamos solo la parte de la FECHA
+            GROUP BY DATE(created_at)
+            ORDER BY fecha ASC;
+        `;
+    // Si no vienen fechas, usamos el mes actual por defecto
+    const result = await pool.query(query, [startDate || '2026-03-01', endDate || '2026-03-31']);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// D. Historial de Movimientos (Solo Físico)
+app.get('/api/cash/history', async (req, res) => {
+  try {
+    const query = `
+            SELECT m.*, u.name as user_name 
+            FROM cash_movements m 
+            JOIN users u ON m.user_id = u.id 
+            ORDER BY m.created_at DESC LIMIT 20;
+        `;
+    const result = await pool.query(query);
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Backend de Caixeta corriendo en el puerto ${PORT}`);
