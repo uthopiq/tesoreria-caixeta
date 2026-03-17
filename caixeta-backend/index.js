@@ -459,6 +459,24 @@ app.get('/api/invoices/pending', async (req, res) => {
   }
 });
 
+// Endpoint para obtener TODAS las facturas de compra pendientes
+app.get('/api/invoices/purchase-pending', async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        i.id, i.factusol_number, i.pending_amount, i.total_amount, e.name as client
+      FROM factusol_invoices i
+      JOIN factusol_entities e ON i.entity_id = e.id
+      WHERE i.pending_amount > 0 AND i.is_purchase = true;
+    `;
+    const result = await pool.query(query);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error obteniendo facturas de compra pendientes' });
+  }
+});
+
 // ENDPOINT PARA CONFIRMAR CONCILIACIÓN (El corazón del flujo)
 app.post('/api/reconcile', async (req, res) => {
   const { transactionId, invoiceId, userId, amount, concept } = req.body;
@@ -588,7 +606,55 @@ app.post('/api/classify-manual', async (req, res) => {
   }
 });
 
+// 1. Endpoints para Conciliación de Pagos (Igual que cobros pero con importes < 0)
+app.get('/api/transactions/pending-payments', async (req, res) => {
+  try {
+    const query = `
+            SELECT t.*, c.match_confidence, i.id as invoice_id, i.factusol_number, i.pending_amount, e.name as vendor_name
+            FROM bank_transactions t
+            LEFT JOIN conciliations c ON t.id = c.transaction_id
+            LEFT JOIN factusol_invoices i ON c.invoice_id = i.id
+            LEFT JOIN factusol_entities e ON i.entity_id = e.id
+            WHERE t.amount < 0 AND t.status IN ('pending', 'suggested')
+            ORDER BY t.value_date DESC;
+        `;
+    const result = await pool.query(query);
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
 
+// 2. Previsión de Pagos (Para la tabla informativa agrupada por semanas)
+app.get('/api/payments/forecast', async (req, res) => {
+  const { maxDate, minDate } = req.query;
+  try {
+    let query = `
+            SELECT 
+                i.factusol_number as numero,
+                i.created_at as fecha,
+                e.name as proveedor,
+                i.total_amount as importe_factura,
+                i.due_date as fecha_vencimiento,
+                i.pending_amount as falta_pagar,
+                i.payment_method as forma_pago
+            FROM factusol_invoices i
+            JOIN factusol_entities e ON i.entity_id = e.id
+            WHERE i.is_purchase = true
+        `;
+    let params = [];
+    if (maxDate) {
+      params.push(maxDate);
+      query += ` AND i.due_date <= $${params.length}`;
+    }
+    if (minDate) {
+      params.push(minDate);
+      query += ` AND i.due_date >= $${params.length}`;
+    }
+    query += ` ORDER BY i.due_date ASC;`;
+
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Backend de Caixeta corriendo en el puerto ${PORT}`);
